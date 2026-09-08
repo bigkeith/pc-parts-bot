@@ -1,0 +1,4 @@
+venv/
+.env
+listings.db
+__pycache__/
