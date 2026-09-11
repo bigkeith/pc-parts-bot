@@ -82,6 +82,7 @@ def run_search_pass():
                     f"Price: ${item['price']}\n"
                     f"Link: {item['url']}\n"
                 ),
+                to_address=["ksavage31@gmail.com", "brandij.love8@gmail.com"],
             )
 
             save_listing(
