@@ -1,0 +1,25 @@
+services:
+  pc-parts-bot:
+    build: .
+    container_name: pc-parts-bot
+    restart: unless-stopped
+
+    # env_file loads your secrets (Gmail + eBay creds) from a .env
+    # file that lives NEXT TO this compose file on the Docker host -
+    # it never gets copied into the image itself, so your secrets
+    # stay out of the container image entirely.
+    env_file:
+      - .env
+    environment:
+      # Tells database.py to store the SQLite file inside the
+      # mounted volume below, instead of the container's ephemeral
+      # filesystem
+      - DB_PATH=/app/data/listings.db
+
+    # This volume keeps listings.db on the Docker host's filesystem,
+    # not inside the container. That way, if you rebuild or recreate
+    # the container, your database of already-seen listings survives
+    # and you won't get flooded with "new" alerts for things you've
+    # already seen.
+    volumes:
+      - ./data:/app/data

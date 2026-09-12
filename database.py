@@ -4,9 +4,13 @@ Handles storing and checking PC parts listings so we don't
 send duplicate alerts for the same item.
 """
 
+import os
 import sqlite3
 
-DB_FILE = "listings.db"
+# DB_PATH can be overridden with an environment variable - this lets
+# the Docker setup point it at a mounted volume (/app/data/listings.db)
+# while local development just uses a file in the current folder.
+DB_FILE = os.getenv("DB_PATH", "listings.db")
 
 
 def init_db():

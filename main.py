@@ -8,11 +8,19 @@ This script:
   2. Filters out junk listings (accessories, "for parts", wrong specs)
   3. Checks each result against your target price
   4. If it's a new listing under your target price, saves it to the
-     database and emails you an alert
+     database
+  5. Sends ONE digest email summarizing all new matches (if any)
 
-Run this file directly to do one "pass" - later we'll add scheduling
-so it runs automatically every so often.
+Running this file starts a continuous loop: it does one search pass
+immediately, then repeats automatically every CHECK_INTERVAL_MINUTES.
+Leave it running in a terminal (or eventually, a Docker container) and
+it'll keep checking on its own - no need to run it by hand each time.
+
+Press Ctrl+C to stop it.
 """
+
+import time
+import schedule
 
 from database import init_db, is_new_listing, save_listing
 from notifier import send_email_alert
@@ -42,6 +50,21 @@ TRACKED_PRODUCTS = [
         "category_id": 177808,  # Bicycle Brakes
     },
 ]
+
+# -----------------------------------------------------------------
+# EMAIL RECIPIENTS
+# -----------------------------------------------------------------
+# Who should get the digest email. Leave as None to just send to
+# yourself (the GMAIL_ADDRESS in your .env file), or add more emails
+# as a list, e.g.:
+#   ALERT_RECIPIENTS = ["you@gmail.com", "friend@example.com"]
+ALERT_RECIPIENTS = None
+
+# -----------------------------------------------------------------
+# SCHEDULE
+# -----------------------------------------------------------------
+# How often (in minutes) to run a search pass automatically.
+CHECK_INTERVAL_MINUTES = 31
 
 
 def run_search_pass():
@@ -118,14 +141,27 @@ def send_digest_email(matches):
         )
     body = "\n".join(lines)
 
-    send_email_alert(subject=subject, body=body)
+    send_email_alert(subject=subject, body=body, to_address=ALERT_RECIPIENTS)
 
 
 if __name__ == "__main__":
     # Make sure the database exists before we start
     init_db()
 
-    # Do one search pass right now
+    # Do one search pass immediately on startup, rather than waiting
+    # the full interval before the first check
+    print("Running initial search pass...")
     run_search_pass()
+    print("\nInitial pass done.")
 
-    print("\nDone with this pass.")
+    # Schedule run_search_pass() to repeat automatically going forward
+    schedule.every(CHECK_INTERVAL_MINUTES).minutes.do(run_search_pass)
+    print(f"\nScheduled to check every {CHECK_INTERVAL_MINUTES} minutes. "
+          f"Press Ctrl+C to stop.")
+
+    # This loop just waits for scheduled jobs to become due and runs
+    # them - it checks once per second, which is cheap and responsive
+    # without hammering the CPU
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
