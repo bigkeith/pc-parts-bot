@@ -47,8 +47,16 @@ TRACKED_PRODUCTS = [
 def run_search_pass():
     """
     Runs one full pass: search every tracked product, check for new
-    listings under the target price, alert on anything new.
+    listings under the target price, and collect anything new.
+
+    Instead of sending one email per match (which gets spammy fast),
+    we collect all new matches from every product into one list, then
+    send a single digest email at the end summarizing everything.
     """
+    # Collects every new match across all tracked products, so we can
+    # send ONE email at the end instead of one per listing
+    new_matches = []
+
     for product in TRACKED_PRODUCTS:
         query = product["query"]
         max_price = product["max_price"]
@@ -71,19 +79,11 @@ def run_search_pass():
             if not is_new_listing(item["item_id"]):
                 continue
 
-            # New match under budget - alert and remember it
+            # New match under budget - remember it for the digest,
+            # and record which search query it matched (useful in
+            # the email body since multiple products share one email)
             print(f"NEW MATCH: {item['title']} - ${item['price']}")
-
-            send_email_alert(
-                subject=f"Price Alert: {item['title']} - ${item['price']}",
-                body=(
-                    f"Found a match for '{query}'!\n\n"
-                    f"Title: {item['title']}\n"
-                    f"Price: ${item['price']}\n"
-                    f"Link: {item['url']}\n"
-                ),
-                to_address=["ksavage31@gmail.com", "brandij.love8@gmail.com"],
-            )
+            new_matches.append({**item, "query": query})
 
             save_listing(
                 item_id=item["item_id"],
@@ -91,6 +91,34 @@ def run_search_pass():
                 price=item["price"],
                 url=item["url"],
             )
+
+    # Only send an email if we actually found something new - no
+    # point emailing an empty "nothing found" digest every run
+    if new_matches:
+        send_digest_email(new_matches)
+    else:
+        print("\nNo new matches this pass - no email sent.")
+
+
+def send_digest_email(matches):
+    """
+    Sends a single email summarizing every new match found in this
+    pass, instead of one email per listing.
+    """
+    subject = f"Price Bot: {len(matches)} new match(es) found"
+
+    # Build the email body by listing each match on its own block
+    lines = [f"Found {len(matches)} new listing(s):\n"]
+    for item in matches:
+        lines.append(
+            f"- {item['title']}\n"
+            f"  Price: ${item['price']}\n"
+            f"  Matched search: {item['query']}\n"
+            f"  Link: {item['url']}\n"
+        )
+    body = "\n".join(lines)
+
+    send_email_alert(subject=subject, body=body)
 
 
 if __name__ == "__main__":
