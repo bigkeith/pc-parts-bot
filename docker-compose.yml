@@ -4,13 +4,17 @@ services:
     container_name: pc-parts-bot
     restart: unless-stopped
 
-    # env_file loads your secrets (Gmail + eBay creds) from a .env
-    # file that lives NEXT TO this compose file on the Docker host -
-    # it never gets copied into the image itself, so your secrets
-    # stay out of the container image entirely.
-    env_file:
-      - .env
+    # Secrets come from Portainer's "Environment variables" section
+    # in the stack UI (or a local .env file if you're running this
+    # with plain docker compose) - the ${...} syntax below pulls each
+    # one in and passes it to the container. This avoids needing an
+    # actual .env FILE to exist inside the deployed stack folder,
+    # which Portainer's repository-based deploys don't provide.
     environment:
+      - GMAIL_ADDRESS=${GMAIL_ADDRESS}
+      - GMAIL_APP_PASSWORD=${GMAIL_APP_PASSWORD}
+      - EBAY_CLIENT_ID=${EBAY_CLIENT_ID}
+      - EBAY_CLIENT_SECRET=${EBAY_CLIENT_SECRET}
       # Tells database.py to store the SQLite file inside the
       # mounted volume below, instead of the container's ephemeral
       # filesystem
