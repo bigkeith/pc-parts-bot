@@ -27,3 +27,12 @@ services:
     # already seen.
     volumes:
       - ./data:/app/data
+
+
+          # The custom network Portainer creates for this stack seems to
+    # have DNS resolution problems (api.ebay.com fails to resolve),
+    # even though the Docker host's DNS works fine otherwise. Setting
+    # explicit DNS servers here works around that.
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
