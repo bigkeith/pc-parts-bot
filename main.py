@@ -58,7 +58,7 @@ TRACKED_PRODUCTS = [
 # yourself (the GMAIL_ADDRESS in your .env file), or add more emails
 # as a list, e.g.:
 #   ALERT_RECIPIENTS = ["you@gmail.com", "friend@example.com"]
-ALERT_RECIPIENTS = None
+ALERT_RECIPIENTS = ["ksavage31@gmail.com", "brandijlove8@gmail.com"]
 
 # -----------------------------------------------------------------
 # SCHEDULE
