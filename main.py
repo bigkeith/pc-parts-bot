@@ -64,7 +64,7 @@ ALERT_RECIPIENTS = ["ksavage31@gmail.com", "brandijlove8@gmail.com"]
 # SCHEDULE
 # -----------------------------------------------------------------
 # How often (in minutes) to run a search pass automatically.
-CHECK_INTERVAL_MINUTES = 31
+CHECK_INTERVAL_MINUTES = 120
 
 
 def run_search_pass():
